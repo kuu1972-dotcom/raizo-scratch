@@ -14,7 +14,7 @@ const versionLabel = document.querySelector("#versionLabel");
 const ctx = cover.getContext("2d", { willReadFrequently: false });
 const fx = effects.getContext("2d", { willReadFrequently: false });
 
-const APP_VERSION = "1.2.0";
+const APP_VERSION = "1.2.1";
 const COLORS = ["#fff3a3", "#ff7aa8", "#75e6da", "#8fd14f", "#ffb347", "#b89cff", "#ffffff"];
 const EFFECT_COUNT = 10;
 
@@ -207,7 +207,7 @@ async function unlockAudio() {
   if (!audioContext) {
     audioContext = new AudioContext();
     masterGain = audioContext.createGain();
-    masterGain.gain.value = 0.42;
+    masterGain.gain.value = 0.62;
     masterGain.connect(audioContext.destination);
   }
 
@@ -229,6 +229,7 @@ async function unlockAudio() {
     gain.connect(masterGain);
     source.start(0);
     audioUnlocked = true;
+    playTone(audioContext.currentTime, 440, 0.12, { endFrequency: 660, type: "sine", volume: 0.18 });
   }
 
   return audioContext;
@@ -322,7 +323,7 @@ function playRainbowSound(start) {
 }
 
 function playBubbleSound(start) {
-  playTone(start, 360, 0.11, { endFrequency: 720, type: "sine", volume: 0.18 });
+  playTone(start, 260, 0.16, { endFrequency: 620, type: "sine", volume: 0.28 });
 }
 
 function playConfettiSound(start) {
@@ -752,6 +753,9 @@ photoInput.addEventListener("change", async () => {
 
 cover.addEventListener("pointerdown", startScratch);
 cover.addEventListener("pointermove", moveScratch);
+cover.addEventListener("touchstart", () => {
+  unlockAudio().then(() => playEffectSound(currentEffect));
+}, { passive: true });
 window.addEventListener("pointerup", stopScratch);
 window.addEventListener("pointercancel", stopScratch);
 window.addEventListener("resize", () => {
@@ -761,7 +765,32 @@ window.addEventListener("resize", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js").catch(() => {});
+    navigator.serviceWorker.register("service-worker.js?v=1.2.1").then((registration) => {
+      registration.update().catch(() => {});
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: "SKIP_WAITING" });
+      }
+      registration.addEventListener("updatefound", () => {
+        const worker = registration.installing;
+        if (!worker) {
+          return;
+        }
+        worker.addEventListener("statechange", () => {
+          if (worker.state === "installed" && navigator.serviceWorker.controller) {
+            worker.postMessage({ type: "SKIP_WAITING" });
+          }
+        });
+      });
+    }).catch(() => {});
+
+    let refreshed = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshed) {
+        return;
+      }
+      refreshed = true;
+      window.location.reload();
+    });
   });
 }
 
