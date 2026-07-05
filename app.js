@@ -39,6 +39,7 @@ let animationFrame = 0;
 let audioContext = null;
 let masterGain = null;
 let lastSoundAt = 0;
+let audioUnlocked = false;
 
 function openDatabase() {
   return new Promise((resolve, reject) => {
@@ -294,7 +295,7 @@ function scratch(from, to) {
   startEffects();
 }
 
-function ensureAudio() {
+async function unlockAudio() {
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   if (!AudioContext) {
     return null;
@@ -303,12 +304,28 @@ function ensureAudio() {
   if (!audioContext) {
     audioContext = new AudioContext();
     masterGain = audioContext.createGain();
-    masterGain.gain.value = 0.18;
+    masterGain.gain.value = 0.42;
     masterGain.connect(audioContext.destination);
   }
 
   if (audioContext.state === "suspended") {
-    audioContext.resume().catch(() => {});
+    try {
+      await audioContext.resume();
+    } catch {
+      return audioContext;
+    }
+  }
+
+  if (!audioUnlocked) {
+    const buffer = audioContext.createBuffer(1, 1, audioContext.sampleRate);
+    const source = audioContext.createBufferSource();
+    const gain = audioContext.createGain();
+    gain.gain.value = 0.0001;
+    source.buffer = buffer;
+    source.connect(gain);
+    gain.connect(masterGain);
+    source.start(0);
+    audioUnlocked = true;
   }
 
   return audioContext;
@@ -320,8 +337,7 @@ function playEffectSound(effect) {
     return;
   }
 
-  const audio = ensureAudio();
-  if (!audio || !masterGain) {
+  if (!audioContext || !masterGain || audioContext.state !== "running") {
     return;
   }
 
@@ -339,7 +355,7 @@ function playEffectSound(effect) {
     playCandySound
   ];
 
-  players[effect](audio.currentTime);
+  players[effect](audioContext.currentTime);
 }
 
 function playTone(start, frequency, duration, options = {}) {
@@ -775,6 +791,7 @@ function startScratch(event) {
   }
 
   event.preventDefault();
+  unlockAudio().then(() => playEffectSound(currentEffect));
   isDrawing = true;
   currentEffect = (currentEffect + 1) % EFFECT_COUNT;
   lastPoint = pointFromEvent(event);
