@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f7c948">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="こすってでてくる">
+    <title>こすってでてくる</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main class="app-shell" aria-label="こすって画像を出すアプリ">
+      <section class="stage" id="stage">
+        <img id="photo" class="photo" alt="">
+        <canvas id="cover" class="cover" aria-label="ここをこすると写真が出ます"></canvas>
+        <canvas id="effects" class="effects" aria-hidden="true"></canvas>
+
+        <div id="emptyState" class="empty-state">
+          <div class="empty-mark" aria-hidden="true">+</div>
+          <p>写真を追加</p>
+        </div>
+      </section>
+
+      <nav class="toolbar" aria-label="操作">
+        <button class="icon-button" id="addButton" type="button" aria-label="写真を追加">
+          <span aria-hidden="true">+</span>
+        </button>
+        <button class="icon-button" id="shuffleButton" type="button" aria-label="つぎの写真">
+          <span aria-hidden="true">↻</span>
+        </button>
+        <button class="text-button" id="categoryButton" type="button" aria-label="カテゴリを選ぶ">ぜんぶ</button>
+        <button class="text-button" id="tagButton" type="button" aria-label="この写真を分類">分類</button>
+      </nav>
+
+      <input id="photoInput" class="visually-hidden" type="file" accept="image/*" multiple>
+    </main>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>

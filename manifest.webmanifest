@@ -1,0 +1,11 @@
+{
+  "name": "こすってでてくる",
+  "short_name": "こする",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fffdf4",
+  "theme_color": "#f7c948",
+  "orientation": "any",
+  "icons": []
+}
