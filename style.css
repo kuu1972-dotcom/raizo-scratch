@@ -7,8 +7,6 @@
   --grass: #58c77d;
   --ink: #21313f;
   --paper: #fffdf4;
-  --peach: #ff9e80;
-  --lavender: #b89cff;
 }
 
 * {
@@ -123,7 +121,7 @@ input {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 18px;
   min-height: calc(var(--toolbar-size) + env(safe-area-inset-bottom));
   padding: 8px 12px max(8px, env(safe-area-inset-bottom));
   background: rgba(255, 253, 244, 0.86);
@@ -155,33 +153,14 @@ input {
   font-size: 2rem;
 }
 
-.text-button {
-  min-width: 74px;
-  height: 48px;
-  border: 0;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  padding: 0 12px;
-  background: var(--peach);
-  color: var(--ink);
-  font-size: 1.05rem;
-  font-weight: 900;
+.version-label {
+  position: absolute;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(8px, env(safe-area-inset-bottom));
+  color: rgba(33, 49, 63, 0.54);
+  font-size: 0.78rem;
+  font-weight: 800;
   line-height: 1;
-  box-shadow: 0 6px 0 rgba(33, 49, 63, 0.14);
-}
-
-.text-button:active {
-  transform: translateY(4px);
-  box-shadow: 0 2px 0 rgba(33, 49, 63, 0.16);
-}
-
-.text-button:nth-child(4) {
-  background: var(--lavender);
-}
-
-.text-button:disabled {
-  opacity: 0.45;
 }
 
 .visually-hidden {
@@ -201,20 +180,13 @@ input {
   }
 
   .toolbar {
-    gap: 10px;
+    gap: 14px;
     padding-top: 6px;
     padding-bottom: max(6px, env(safe-area-inset-bottom));
   }
 
   .icon-button {
     font-size: 1.9rem;
-  }
-
-  .text-button {
-    min-width: 62px;
-    height: 42px;
-    padding: 0 9px;
-    font-size: 0.92rem;
   }
 }
 
@@ -225,11 +197,5 @@ input {
 
   .toolbar {
     gap: 8px;
-  }
-
-  .text-button {
-    min-width: 64px;
-    padding: 0 8px;
-    font-size: 0.95rem;
   }
 }

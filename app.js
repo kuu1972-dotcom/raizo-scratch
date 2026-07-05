@@ -9,28 +9,20 @@ const effects = document.querySelector("#effects");
 const emptyState = document.querySelector("#emptyState");
 const addButton = document.querySelector("#addButton");
 const shuffleButton = document.querySelector("#shuffleButton");
-const categoryButton = document.querySelector("#categoryButton");
-const tagButton = document.querySelector("#tagButton");
 const photoInput = document.querySelector("#photoInput");
+const versionLabel = document.querySelector("#versionLabel");
 const ctx = cover.getContext("2d", { willReadFrequently: false });
 const fx = effects.getContext("2d", { willReadFrequently: false });
 
+const APP_VERSION = "1.2.0";
 const COLORS = ["#fff3a3", "#ff7aa8", "#75e6da", "#8fd14f", "#ffb347", "#b89cff", "#ffffff"];
 const EFFECT_COUNT = 10;
-const CATEGORIES = [
-  { id: "all", label: "ぜんぶ" },
-  { id: "person", label: "ひと" },
-  { id: "car", label: "くるま" },
-  { id: "other", label: "そのた" }
-];
-const ASSIGNABLE_CATEGORIES = CATEGORIES.filter((category) => category.id !== "all");
 
 let db;
 let photoItems = [];
 let currentObjectUrl = "";
 let currentIndex = -1;
 let currentEffect = 0;
-let activeCategory = "all";
 let isDrawing = false;
 let lastPoint = null;
 let resizeTimer = 0;
@@ -78,12 +70,10 @@ function readAllPhotos() {
   });
 }
 
-async function savePhoto(file) {
-  const category = await detectCategory(file);
+function savePhoto(file) {
   const item = {
     id: `${Date.now()}-${crypto.randomUUID()}`,
     blob: file,
-    category,
     name: file.name,
     createdAt: Date.now()
   };
@@ -94,37 +84,14 @@ async function savePhoto(file) {
   });
 }
 
-function updatePhoto(item) {
-  return transact("readwrite", (store) => {
-    store.put(item);
-    return item;
-  });
-}
-
-function visiblePhotoIndexes() {
-  if (activeCategory === "all") {
-    return photoItems.map((item, index) => index);
-  }
-
-  const indexes = [];
-  photoItems.forEach((item, index) => {
-    if ((item.category || "other") === activeCategory) {
-      indexes.push(index);
-    }
-  });
-
-  return indexes.length ? indexes : photoItems.map((item, index) => index);
-}
-
 function randomIndex(exceptIndex = -1) {
-  const indexes = visiblePhotoIndexes();
-  if (indexes.length <= 1) {
-    return indexes[0] ?? 0;
+  if (photoItems.length <= 1) {
+    return 0;
   }
 
-  let next = indexes[Math.floor(Math.random() * indexes.length)];
+  let next = Math.floor(Math.random() * photoItems.length);
   while (next === exceptIndex) {
-    next = indexes[Math.floor(Math.random() * indexes.length)];
+    next = Math.floor(Math.random() * photoItems.length);
   }
   return next;
 }
@@ -132,16 +99,6 @@ function randomIndex(exceptIndex = -1) {
 function setEmptyState(isEmpty) {
   emptyState.hidden = !isEmpty;
   shuffleButton.disabled = isEmpty;
-  categoryButton.disabled = isEmpty;
-  tagButton.disabled = isEmpty;
-}
-
-function updateCategoryButtons() {
-  const selected = CATEGORIES.find((category) => category.id === activeCategory) || CATEGORIES[0];
-  const current = photoItems[currentIndex];
-  const assigned = ASSIGNABLE_CATEGORIES.find((category) => category.id === (current?.category || "other"));
-  categoryButton.textContent = selected.label;
-  tagButton.textContent = assigned ? assigned.label : "分類";
 }
 
 function fitCanvasToStage() {
@@ -203,64 +160,10 @@ function showPhoto(index) {
   photo.src = currentObjectUrl;
   resetCover();
   clearEffects();
-  updateCategoryButtons();
 }
 
 function showRandomPhoto() {
   showPhoto(randomIndex(currentIndex));
-}
-
-function nextCategoryId(categoryId, categories) {
-  const index = categories.findIndex((category) => category.id === categoryId);
-  return categories[(index + 1 + categories.length) % categories.length].id;
-}
-
-function changeActiveCategory() {
-  activeCategory = nextCategoryId(activeCategory, CATEGORIES);
-  updateCategoryButtons();
-  if (photoItems.length) {
-    showRandomPhoto();
-  }
-}
-
-async function changeCurrentPhotoCategory() {
-  const item = photoItems[currentIndex];
-  if (!item) {
-    return;
-  }
-
-  item.category = nextCategoryId(item.category || "other", ASSIGNABLE_CATEGORIES);
-  await updatePhoto(item);
-  updateCategoryButtons();
-}
-
-async function detectCategory(file) {
-  const filename = file.name.toLowerCase();
-  if (/car|auto|vehicle|truck|bus|taxi|van|車|くるま|自動車/.test(filename)) {
-    return "car";
-  }
-
-  if (await hasFace(file)) {
-    return "person";
-  }
-
-  return "other";
-}
-
-async function hasFace(file) {
-  if (!("FaceDetector" in window) || !("createImageBitmap" in window)) {
-    return false;
-  }
-
-  try {
-    const detector = new FaceDetector({ fastMode: true, maxDetectedFaces: 4 });
-    const bitmap = await createImageBitmap(file);
-    const faces = await detector.detect(bitmap);
-    bitmap.close();
-    return faces.length > 0;
-  } catch {
-    return false;
-  }
 }
 
 function pointFromEvent(event) {
@@ -829,6 +732,7 @@ async function addPhotos(files) {
 async function init() {
   db = await openDatabase();
   photoItems = await readAllPhotos();
+  versionLabel.textContent = `v${APP_VERSION}`;
   fitCanvasToStage();
 
   if (photoItems.length) {
@@ -841,8 +745,6 @@ async function init() {
 addButton.addEventListener("click", () => photoInput.click());
 emptyState.addEventListener("click", () => photoInput.click());
 shuffleButton.addEventListener("click", showRandomPhoto);
-categoryButton.addEventListener("click", changeActiveCategory);
-tagButton.addEventListener("click", changeCurrentPhotoCategory);
 photoInput.addEventListener("change", async () => {
   await addPhotos(photoInput.files);
   photoInput.value = "";
